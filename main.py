@@ -1,23 +1,45 @@
 import sys
+import sqlite3
 
 EXPENSES = []
 
 MONTHS = {1: 'Styczeń', 2: 'Luty', 3: 'Marzec', 4: 'Kwiecień', 5: 'Maj', 6: 'Czerwiec',
           7: 'Lipiec', 8: 'Sierpień', 9: 'Wrzesień', 10: 'Październik', 11: 'Listopad', 12: 'Grudzień'}
 
-def add_expense(month):
+# Połączenie z bazą danych SQLite
+connection = sqlite3.connect("expenses_data.db")
+
+def creat_table(connection):
+    try:
+        cur = connection.cursor()
+        cur.execute("""CREATE TABLE expenses 
+        (category TEXT, expense INTEGER)
+        """)
+    except:
+        pass
+
+def add_expense(connection, month):
     amount_expense = int(input("Kwota wydatku [zł]: "))
     category = input("Podaj kategorię wydatku: ")
     expense = (amount_expense, category, month)
     EXPENSES.append(expense)
+    cur = connection.cursor()
+    cur.execute(""" INSERT INTO expenses (category, expense) VALUES (?, ?) """, (category, amount_expense,))
+    connection.commit()
 
-
-def show_expenses(month):
+def show_expenses(connection, month):
     print("\nWszystkie wydatki miesiąca: ")
-    for expense_amount, category, expense_month in EXPENSES:
+    cur = connection.cursor()
+    cur.execute(""" SELECT * FROM expenses """)
+    result = cur.fetchall()
+
+    for row in result:
+        print(row)
+
+    """for expense_amount, category, expense_month in EXPENSES:
         if month == expense_month:
             print(f" {expense_amount} - {category}")
-
+    """
 
 def show_stats(month):
     all_month_expenses = sum(expense_amount for expense_amount, _, expense_month in EXPENSES if expense_month == month)
@@ -78,6 +100,7 @@ def categories():
             for cat in content:
                 if cat.strip() == remove_category_name:
                     content.remove(cat)
+                    print("Usunięto kategorię: ", cat)
             with open(file, 'w') as category:
                 for cat in content:
                     category.write(str(cat.title()))
@@ -86,6 +109,9 @@ def categories():
 if __name__ == '__main__':
 
     while True:
+
+        creat_table(connection)
+
         print()
         while True:
             try:
@@ -124,9 +150,9 @@ if __name__ == '__main__':
             if choice == 0:
                 break
             elif choice == 1:
-                show_expenses(month)
+                show_expenses(connection, month)
             elif choice == 2:
-                add_expense(month)
+                add_expense(connection, month)
             elif choice == 3:
                 categories()
             elif choice == 4:
