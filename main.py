@@ -7,34 +7,37 @@ MONTHS = {1: 'Styczeń', 2: 'Luty', 3: 'Marzec', 4: 'Kwiecień', 5: 'Maj', 6: 'C
           7: 'Lipiec', 8: 'Sierpień', 9: 'Wrzesień', 10: 'Październik', 11: 'Listopad', 12: 'Grudzień'}
 
 # Połączenie z bazą danych SQLite
-connection = sqlite3.connect("expenses_data.db")
+connection = sqlite3.connect("expenses1.db")
 
 def creat_table(connection):
-    try:
-        cur = connection.cursor()
-        cur.execute("""CREATE TABLE expenses 
-        (category TEXT, expense INTEGER)
-        """)
-    except:
-        pass
+    for value in MONTHS.values():
+        try:
+            cur = connection.cursor()
+            cur.execute(f"""CREATE TABLE (?) (category TEXT, expense INTEGER) """, (value,))
+        except:
+            pass
 
 def add_expense(connection, month):
     amount_expense = int(input("Kwota wydatku [zł]: "))
     category = input("Podaj kategorię wydatku: ")
     expense = (amount_expense, category, month)
     EXPENSES.append(expense)
-    cur = connection.cursor()
-    cur.execute(""" INSERT INTO expenses (category, expense) VALUES (?, ?) """, (category, amount_expense,))
-    connection.commit()
+    for key, value in MONTHS.items():
+        if month == key:
+            cur = connection.cursor()
+            cur.execute(f""" INSERT INTO {value} (category, expense) VALUES (?, ?) """, (category, amount_expense,))
+            connection.commit()
 
 def show_expenses(connection, month):
-    print("\nWszystkie wydatki miesiąca: ")
-    cur = connection.cursor()
-    cur.execute(""" SELECT * FROM expenses """)
-    result = cur.fetchall()
+    for key, value in MONTHS.items():
+        if month == key:
+            print("\nWszystkie wydatki miesiąca: ")
+            cur = connection.cursor()
+            cur.execute(f""" SELECT * FROM {value} """)
+            result = cur.fetchall()
 
-    for row in result:
-        print(row)
+            for row in result:
+                print(row)
 
     """for expense_amount, category, expense_month in EXPENSES:
         if month == expense_month:
@@ -126,10 +129,10 @@ if __name__ == '__main__':
 
         while True:
             print()
-
             for key, value in MONTHS.items():  # Wyświetlanie wybranego miesiąca
                 if month == key:
                     print("Miesiąc ", value)
+
 
             print("0. Powrót do wyboru miesiąca")
             print("1. Wyświetl wszystkie wydatki")
